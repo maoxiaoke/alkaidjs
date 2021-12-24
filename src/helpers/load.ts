@@ -1,5 +1,5 @@
 
-import { globbySync } from 'globby';
+import * as glob from 'globby';
 import { join } from 'path';
 
 /**
@@ -8,7 +8,7 @@ import { join } from 'path';
  * @returns
  */
 export function loadEntryFiles(entry: string) {
-  return globbySync('**/*.*', {
+  return glob.sync('**/*.*', {
     cwd: entry,
     ignore: ['node_modules/**', '*.d.ts', '*.?(ali|wechat).?(ts|tsx|js|jsx)'],
     onlyFiles: true,

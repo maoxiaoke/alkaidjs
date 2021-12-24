@@ -53,7 +53,7 @@ export function createLogger(name?: string) {
           );
           break;
         default:
-          if (silent) {
+          if (!silent) {
             console.log(
               colorizeLabel(name, label, type),
               colorize(type)(msg),

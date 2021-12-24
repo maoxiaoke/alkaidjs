@@ -1,4 +1,4 @@
-import swc from '@swc/core';
+import * as swc from '@swc/core';
 import { copySync, ensureDirSync, writeFileSync } from 'fs-extra';
 import { resolve, extname } from 'path';
 import { loadEntryFiles } from '../helpers/load';
@@ -26,24 +26,23 @@ export async function runSwc(ctx: LoaderContext) {
     )
       .map((path) => ({
         path,
-        absolutePath: resolve(rootDir, path),
-        ext: extname(path),
+        absolutePath: resolve(rootDir, entryDir, path),
+        ext: extname(path).slice(1),
       }));
-
-  logger.info('SWC', 'start to build...');
+  logger.info('SWC', 'start to compile files...');
 
   ensureDirSync(outputDir);
 
   for (let i = 0; i < files.length; ++i) {
     const isDeclaration = files[i].path.includes('.d.ts');
     const isTypeScript = ['ts', 'tsx'].includes(files[i].ext) && !isDeclaration;
-    const isEcmaScript = ['mjs', 'js', 'jsx'].includes(extname(files[i].ext));
+    const isEcmaScript = ['mjs', 'js', 'jsx'].includes(files[i].ext);
 
     const dest = resolve(outputDir, files[i].path);
 
     if (isTypeScript || isEcmaScript) {
       const { code, map } = swc.transformFileSync(
-        files[i].path,
+        files[i].absolutePath,
         {
           jsc: {
             parser: {
@@ -62,9 +61,10 @@ export async function runSwc(ctx: LoaderContext) {
       copySync(files[i].absolutePath, dest);
       logger.info('SWC', `file ${files[i].absolutePath} copied to ${dest}`);
     }
-
-    // todos: gen dts
   }
+
+  // todos: gen dts
+  logger.info('SWC', 'start to generate declaration for you...');
 
   return files;
 }
