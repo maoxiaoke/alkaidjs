@@ -9,17 +9,17 @@ const colorize = (type: LOG_LEVEL) => (msg: string) => {
     type === 'info'
       ? 'blue'
       : type === 'error'
-      ? 'red'
-      : type === 'warn'
-      ? 'yellow'
-      : 'green';
-    return picocolors[color](msg);
-}
+        ? 'red'
+        : type === 'warn'
+          ? 'yellow'
+          : 'green';
+  return picocolors[color](msg);
+};
 
-function colorizeLabel (
+function colorizeLabel(
   name: string | undefined,
   label: string,
-  type: LOG_LEVEL
+  type: LOG_LEVEL,
 ) {
   return [
     name && `${picocolors.dim('[')}${name.toUpperCase()}${picocolors.dim(']')}`,
@@ -29,7 +29,7 @@ function colorizeLabel (
     .join(' ');
 }
 
-export function setSlient () {
+export function setSlient() {
   silent = true;
 }
 
@@ -38,39 +38,42 @@ export function setSlient () {
  * @param name name is for every alkaid's config
  * @returns
  */
-export function createLogger (name?: string) {
+export function createLogger(name?: string) {
   return {
     log(
       type: LOG_LEVEL,
       label: string,
       msg: string,
-    ){
-      switch(type) {
+    ) {
+      switch (type) {
         case 'error':
           console.error(
             colorizeLabel(name, label, 'error'),
-            colorize('error')(msg)
+            colorize('error')(msg),
           );
           break;
         default:
-          console.log(
-            colorizeLabel(name, label, type),
-            colorize(type)(msg)
-          )
+          if (silent) {
+            console.log(
+              colorizeLabel(name, label, type),
+              colorize(type)(msg),
+            );
+          }
       }
     },
-    success(label: string, msg: string){
+    success(label: string, msg: string) {
       this.log('success', label, msg);
     },
-    info(){
-      this.log('info');
+    info(label: string, msg: string) {
+      this.log('info', label, msg);
     },
-    warn() {
-      this.log('warn');
+    warn(label: string, msg: string) {
+      this.log('warn', label, msg);
     },
-    error() {
-      this.log('error');
-    }
-  }
+    error(label: string, msg: string) {
+      this.log('error', label, msg);
+    },
+  };
 }
 
+export type CreateLoggerReturns = ReturnType<typeof createLogger>;

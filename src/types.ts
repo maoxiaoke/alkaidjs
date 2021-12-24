@@ -1,4 +1,6 @@
-type DefaultLoader = 'swc'
+import { CreateLoggerReturns } from './helpers/logger';
+
+type DefaultLoader = 'swc';
 
 export interface Config {
   /**
@@ -25,12 +27,12 @@ export interface Config {
    * esm supports
    * @default resolve(process.cwd(), 'src')
    */
-  entryDir?: string[];
+  entryDir?: string;
   /**
    * output directory
    * @default dist
    */
-  outputDir?: string[];
+  outputDir?: string;
 
   /**
    * minize output
@@ -42,4 +44,9 @@ export interface Config {
    * Whether generate sourceMap or not
    */
   sourceMap?: boolean;
+}
+
+export interface LoaderContext extends Config {
+  rootDir: string;
+  logger: CreateLoggerReturns;
 }

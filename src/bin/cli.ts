@@ -7,10 +7,12 @@ const cli = cac('alkaid');
 
 cli
   .command('build', 'desc')
-  .action(options => {
+  .action((options) => {
     build();
-  })
+  });
 
 cli.help();
+
+cli.version('1.0.0');
 
 cli.parse();
