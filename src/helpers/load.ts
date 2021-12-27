@@ -2,6 +2,7 @@
 import * as glob from 'globby';
 import { join } from 'path';
 import type { Config } from '../types';
+import { safeRequire } from '../utils';
 
 /**
  * load entry files
@@ -16,6 +17,11 @@ export function loadEntryFiles(entry: string) {
   });
 }
 
+/**
+ * load config
+ * @param entry
+ * @returns
+ */
 export function loadAlkaidConfig(
   cwd: string,
 ): Config | Config[] {
@@ -23,4 +29,13 @@ export function loadAlkaidConfig(
   // eslint-disable-next-line @typescript-eslint/semi
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   return require(join(cwd, 'alkaid.config.json'));
+}
+
+/**
+ * load package.json
+ * @param cwd
+ * @returns
+ */
+export function loadPkg(cwd: string) {
+  return safeRequire(join(cwd, 'package.json'));
 }

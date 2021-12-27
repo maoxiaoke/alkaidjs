@@ -5,6 +5,7 @@ import { resolve, extname, dirname } from 'path';
 import { loadEntryFiles } from '../helpers/load';
 import { isEcmascriptOnly, isTypescriptOnly, isJsx } from '../helpers/suffix';
 import dtsCompile from '../helpers/dts';
+import { normalizeSwcConfig } from './normalize';
 import type { LoaderContext } from './index';
 
 export interface File {
@@ -54,17 +55,7 @@ export async function runSwc(ctx: LoaderContext) {
     if (isTypeScript || isEcmaScript) {
       const { code, map } = swc.transformFileSync(
         files[i].absolutePath,
-        {
-          jsc: {
-            parser: {
-              syntax: isTypeScript ? 'typescript' : 'ecmascript',
-              jsx: isJsx(files[i].ext),
-            },
-            minify: ctx.minify as JsMinifyOptions ?? undefined,
-            loose: true,
-          },
-          sourceMaps: ctx.sourceMap,
-        },
+        normalizeSwcConfig(ctx, files[i]),
       );
 
       files[i].code = code;

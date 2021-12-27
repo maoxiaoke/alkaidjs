@@ -1,8 +1,13 @@
 import type { DefaultLoader, Loader } from './loaders';
-import type { JsMinifyOptions } from '@swc/core';
+import type { JsMinifyOptions, Options as swcCompileOptions, JscTarget } from '@swc/core';
+import type { RollupOptions } from 'rollup';
 
 interface Declation {
   js?: boolean;
+}
+
+interface Json<T> {
+  [str: string]: T;
 }
 
 export interface Config {
@@ -32,6 +37,10 @@ export interface Config {
    */
   entryDir?: string;
   /**
+   * use swc to transform your code to target
+   */
+  extraCompileOptions?: swcCompileOptions;
+  /**
    * output directory
    * @default dist
    */
@@ -55,5 +64,20 @@ export interface Config {
   * @default true for typescript
   */
   declation?: boolean | Declation;
+
+  define?: Json<string>;
+
+  /**
+   * FIXME: 如何支持 browserlist 的用法
+   * @default es5
+   */
+  target?: JscTarget;
+
+  watch?: boolean;
+
+  /**
+   * Options will deep merge to built-in options.
+   */
+  rollupOptions?: RollupOptions;
 }
 
