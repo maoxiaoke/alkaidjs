@@ -18,8 +18,8 @@ export interface DtsInputFile extends File {
 
 const nomalizeDtsInput = (file: File): DtsInputFile => {
   const { dest, absolutePath, ext } = file;
-  const dtsDest = dest.replace(ext, '.d.ts');
-  const dtsPath = absolutePath.replace(ext, '.d.ts');
+  const dtsDest = dest.replace(ext, 'd.ts');
+  const dtsPath = absolutePath.replace(ext, 'd.ts');
   return {
     ...file,
     dtsDest,

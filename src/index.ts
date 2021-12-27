@@ -1,6 +1,7 @@
 import { resolve } from 'path';
 import { toArray } from './utils';
 import { runSwc } from './loaders/swc';
+import { runRollup } from './loaders/rollup';
 import type { Config } from './types';
 import { createHook } from './helpers/hookable';
 import { loadAlkaidConfig } from './helpers/load';
@@ -34,13 +35,15 @@ export async function build(_rootDir?: string, _configs?: Config | Config[]) {
         runSwc(ctx);
       }
 
+      // use rollup to bundle your app
       if (cfg.loader === 'rollup') {
-        //
+        runRollup(ctx);
       }
 
       if (typeof cfg.loader === 'function') {
         cfg.loader(ctx);
       }
+      return true;
     }),
   );
 }

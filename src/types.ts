@@ -12,7 +12,7 @@ export interface Config {
   name?: string;
   /**
    * determine how to handle source file
-   * type `string` used for `swc`、`build-scripts`
+   * type `string` used for `swc`、`rollup`
    * type `Function` for custom loaders
    */
   loader?: DefaultLoader | Loader;
@@ -44,9 +44,11 @@ export interface Config {
   minify?: boolean | JsMinifyOptions;
 
   /**
-   * Whether generate sourceMap or not
+  * - true to generate a sourcemap for the code and include it in the result object.
+  * - "inline" to generate a sourcemap and append it as a data URL to the end of the code,
+  * but not include it in the result object.
    */
-  sourceMap?: boolean;
+  sourceMap?: boolean | 'inline';
 
   /**
   * Whether generate declation for Ecmascript & Typescript

@@ -1,7 +1,7 @@
 import * as swc from '@swc/core';
 import type { JsMinifyOptions } from '@swc/core';
 import { copySync, ensureDirSync, writeFileSync } from 'fs-extra';
-import { resolve, extname } from 'path';
+import { resolve, extname, dirname } from 'path';
 import { loadEntryFiles } from '../helpers/load';
 import { isEcmascriptOnly, isTypescriptOnly, isJsx } from '../helpers/suffix';
 import dtsCompile from '../helpers/dts';
@@ -42,14 +42,14 @@ export async function runSwc(ctx: LoaderContext) {
         ext: extname(filePath).slice(1),
       }));
 
-  ensureDirSync(outputDir);
-
   for (let i = 0; i < files.length; ++i) {
     const isTypeScript = isTypescriptOnly(files[i].ext, files[i].filePath);
     const isEcmaScript = isEcmascriptOnly(files[i].ext, files[i].filePath);
 
     const dest = resolve(outputDir, files[i].filePath);
     files[i].dest = dest;
+
+    ensureDirSync(dirname(dest));
 
     if (isTypeScript || isEcmaScript) {
       const { code, map } = swc.transformFileSync(
@@ -63,6 +63,7 @@ export async function runSwc(ctx: LoaderContext) {
             minify: ctx.minify as JsMinifyOptions ?? undefined,
             loose: true,
           },
+          sourceMaps: ctx.sourceMap,
         },
       );
 
@@ -70,6 +71,10 @@ export async function runSwc(ctx: LoaderContext) {
       files[i].map = map;
 
       writeFileSync(dest, code, 'utf-8');
+
+      if (ctx.sourceMap !== 'inline') {
+        writeFileSync(`${dest}.map`, map, 'utf-8');
+      }
     } else {
       // Just copy other files to dest
       copySync(files[i].absolutePath, dest);
@@ -80,7 +85,7 @@ export async function runSwc(ctx: LoaderContext) {
   if (
     ctx.declation ||
     (typeof ctx.declation === 'object' && ctx.declation?.js)) {
-    hook.callHooks('swc.start.dts.compile', ctx);
+    await hook.callHooks('swc.start.dts.compile', ctx);
 
     const generateDtsForEcmascript = typeof ctx.declation === 'object' && ctx.declation?.js;
     const compileFiles = files
@@ -91,8 +96,10 @@ export async function runSwc(ctx: LoaderContext) {
       );
 
     dtsCompile(compileFiles, logger);
+    await hook.callHooks('swc.end.dts.compile', ctx);
   }
 
+  await hook.callHooks('swc.end.compile');
 
   return files;
 }
