@@ -1,6 +1,7 @@
 
 import * as glob from 'globby';
 import { join } from 'path';
+import type { Config } from '../types';
 
 /**
  * load entry files
@@ -17,7 +18,7 @@ export function loadEntryFiles(entry: string) {
 
 export function loadAlkaidConfig(
   cwd: string,
-) {
+): Config | Config[] {
   // TODO: match all possible case
   // eslint-disable-next-line @typescript-eslint/semi
   // eslint-disable-next-line @typescript-eslint/no-require-imports

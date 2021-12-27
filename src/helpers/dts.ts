@@ -1,68 +1,77 @@
-import * as path from 'path';
+import { dirname } from 'path';
+import { ensureDirSync, writeFileSync } from 'fs-extra';
 import * as ts from 'typescript';
-const fse = require('fs-extra');
-const { REG_TS, REG_JS } = require('../configs/reg');
-const formatPathForWin = require('../utils/formatPathForWin');
+import type { CreateLoggerReturns } from './logger';
+import type { File } from '../loaders/swc';
 
-// compile options
-const options = {
+// FIXME: should compile accord to tsconfig.json file?
+const defaultTypescriptOptions = {
   allowJs: true,
   declaration: true,
   emitDeclarationOnly: true,
 };
 
-module.exports = function dtsCompiler(compileInfo, {
-  log,
-  generateTypesForJs,
-}) {
-  const regexFile = generateTypesForJs ? REG_JS : REG_TS;
+export interface DtsInputFile extends File {
+  dtsPath: string;
+  dtsDest: string;
+}
 
-  const needCompileList = compileInfo.filter(({ filePath }) => regexFile.test(filePath)).map((data) => {
-    const { filePath, destPath, sourceFile } = data;
-    const targetPath = path.join(destPath, filePath.replace(regexFile, '.d.ts'));
-    const fileNamesDTS = sourceFile.replace(regexFile, '.d.ts');
-    return {
-      ...data,
-      targetPath,
-      fileNamesDTS,
-    };
-  });
+const nomalizeDtsInput = (file: File): DtsInputFile => {
+  const { dest, absolutePath, ext } = file;
+  const dtsDest = dest.replace(ext, '.d.ts');
+  const dtsPath = absolutePath.replace(ext, '.d.ts');
+  return {
+    ...file,
+    dtsDest,
+    dtsPath,
+  };
+};
 
-  if (needCompileList.length === 0) {
+export default function dtsCompile(files: File[], logger: CreateLoggerReturns) {
+  logger.info('DTS', 'Compiling typescript declations...');
+
+  if (!files.length) {
     return;
   }
-  log.info('Compiling ts declaration ...');
-  // Create a Program with an in-memory emit
+
+  const _files = files.map(nomalizeDtsInput);
+
   let createdFiles = {};
-  const host = ts.createCompilerHost(options);
+
+  const host = ts.createCompilerHost(defaultTypescriptOptions);
   host.writeFile = (fileName, contents) => { createdFiles[fileName] = contents; };
 
-  // Prepare and emit the d.ts files
-  const program = ts.createProgram(needCompileList.map(({ sourceFile }) => sourceFile), options, host);
+  const program = ts.createProgram(
+    _files.map(({ absolutePath }) => absolutePath),
+    defaultTypescriptOptions,
+    host,
+  );
+
   const emitResult = program.emit();
+  // FIXME: what this used for
   if (emitResult.diagnostics && emitResult.diagnostics.length > 0) {
     emitResult.diagnostics.forEach((diagnostic) => {
       const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
       if (diagnostic.file) {
         const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
-        log.error(`${diagnostic.file.fileName} (${line + 1}, ${character + 1}): ${message}`);
+        logger.error('DTS', `${diagnostic.file.fileName} (${line + 1}, ${character + 1}): ${message}`);
       } else {
-        log.error(message);
+        logger.error('DTS', message);
       }
     });
   }
 
-  needCompileList.forEach(({ targetPath, fileNamesDTS }) => {
+  _files.forEach(({ dtsPath, dtsDest }) => {
     const content = createdFiles[
-      formatPathForWin(fileNamesDTS)
+      dtsPath
     ];
     // write file
     if (content) {
-      fse.ensureDirSync(path.dirname(targetPath));
-      fse.writeFileSync(targetPath, content, 'utf-8');
+      ensureDirSync(dirname(dtsDest));
+      writeFileSync(dtsDest, content, 'utf-8');
     }
   });
 
   // release
   createdFiles = null;
-};
+}

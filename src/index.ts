@@ -5,9 +5,10 @@ import type { Config } from './types';
 import { createHook } from './helpers/hookable';
 import { loadAlkaidConfig } from './helpers/load';
 import { createLogger } from './helpers/logger';
+import { validateOptions } from './helpers/validate';
+import type { LoaderContext } from './loaders/index';
 
-const onHook = createHook();
-const logger = createLogger('ALKAID');
+const hook = createHook();
 
 export async function build(_rootDir?: string, _configs?: Config | Config[]) {
   const rootDir = resolve(process.cwd(), _rootDir || '.');
@@ -18,16 +19,28 @@ export async function build(_rootDir?: string, _configs?: Config | Config[]) {
 
   return Promise.all(
     toArray(configs).map((cfg) => {
-      const ctx = {
+      const logger = createLogger(cfg?.name);
+      const _cfg = validateOptions(cfg, logger);
+
+      const ctx: LoaderContext = {
         rootDir,
         logger,
-        ...configs,
+        hook,
+        ..._cfg,
       };
+
+      // run swc
       if (cfg.loader === 'swc') {
         runSwc(ctx);
       }
 
-      // if ()
+      if (cfg.loader === 'rollup') {
+        //
+      }
+
+      if (typeof cfg.loader === 'function') {
+        cfg.loader(ctx);
+      }
     }),
   );
 }
