@@ -25,6 +25,8 @@ function normalizeInputOptions(ctx: LoaderContext): InputOptions {
       nodeResolve(),
       commonjs(), // to convert commonjs to import, make it capabile for rollup to bundle
       swcPlugin(ctx),
+      // FIXME: some plugins should appear advance
+      ...ctx.loaderPlugins,
     ],
   };
 }
